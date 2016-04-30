@@ -1,0 +1,46 @@
+Code accompanying the paper: Reflection Removal using Ghosting Cues (CVPR 2015). This code is only provided for research purposes. Please contact the authors for any commercial implementation.
+
+Contact YiChang Shih (yichangshih@gmail.com) or Dilip Krishnan (dilipkay@google.com) for any questions.
+
+* Dependencies
+----------------------------
+- lbfgs package (pre-compiled linux binary code is included under lbfgs)
+- Patch GMM model from Daniel Zoran's website. Included under epllcode/ 
+
+* Installation
+----------------------------
+If the pre-compiled binary in lbfgs does not work on your platform, 
+you can re-compile using the following steps: 
+
+1. Go to lbfgsb/lbfgsb3.0_mex1.2/
+2. run compile_mex.m for Linux, or compile_mex_forWindows.m for windows.
+
+If the above steps do not work, please try the following:
+
+1. Comment out the convertTo32.sh script and change the 64-bit Linux/Mac section to use:
+2. mex -c Lbfgsb.3.0/lbfgsb32.f Lbfgsb.3.0/linpack32.f Lbfgsb.3.0/timer.f
+3. mex -v lbfgsb_wrapper.c -lm -lblas CFLAGS="-ldotwrp -framework Accelerate" ...
+                          -I/usr/local/Cellar/gcc/5.1.0/lib/gcc/5 ...             // change the path according to your system
+                          -L/usr/local/Cellar/gcc/5.1.0/lib/gcc/5 -lgfortran ...
+                          lbfgsb32.o linpack32.o timer.o
+
+This is using homebrew-installed GFortran and libgfortran on MacOS. 
+
+* Using the Code
+----------------------------
+To test the environment, run 
+
+$ deghost simple. 
+
+This will run our code on a 64-by-64 synthetic case. 
+The code will write out in.png (input image contains ghosting reflection), 
+t.png (transmission layer),and r.png (reflection layer) 
+
+
+To generate the results shown in the teaser of the paper, run 
+
+$ deghost apples
+
+This reads the linear input image in floating point values from apples.mat, 
+and output the transmission layer t.png and reflection layer r.png.
+To visualize the input, the code write the input to [0-255] to in.png. 
