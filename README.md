@@ -5,3 +5,6 @@ Source: YiChang Shih, Dilip Krishnan, Fredo Durand, William T. Freeman, MIT CSAI
 https://dilipkay.wordpress.com/reflection_ghosting/
 
 Edited by: Thong Nguyen
+
+How to use:
+run script file: deghosts.m
