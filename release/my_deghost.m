@@ -17,6 +17,7 @@ out_t = strcat(pathstr, '/', name, '_t',ext);
 out_r = strcat(pathstr, '/', name, '_r',ext);
 
 I_in = im2double(imread(image_path));
+I_in = imresize(I_in, 0.09);
 % d3 = size(I_in, 3);
 % if d3 > 1
 %     fprintf('Estimating ghosting kernel...\n');

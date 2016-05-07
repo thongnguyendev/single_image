@@ -4,8 +4,8 @@ function [I_in, configs]=simple(configs)
 % See Figure 2 in the paper.
 
   dims=[64 64];
-
-  I1 = drawCircle(dims(1), dims(2), 40, 40, 20)*0.4;
+  I = drawCircle(dims(1), dims(2), 40, 40, 20);
+  I1 = I * 0.4;
 
   I2=zeros(dims(1),dims(2));
 
