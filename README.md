@@ -7,4 +7,5 @@ https://dilipkay.wordpress.com/reflection_ghosting/
 Edited by: Thong Nguyen
 
 How to use:
+
 run script file: deghosts.m
