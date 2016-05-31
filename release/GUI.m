@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 14-May-2016 09:48:28
+% Last Modified by GUIDE v2.5 31-May-2016 11:34:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -107,14 +107,40 @@ function btnBrowseImg_Callback(hObject, eventdata, handles)
 if isequal(filename,0)
    % disp('User selected Cancel')
 else
+    Reset(handles);
+    handles.p1 = 0;
+    handles.p2 = 0;
     image_path = fullfile(pathname, filename);
     set(handles.txtImage, 'String', image_path);
-    axes(handles.axesImage)
     matlabImage = imread(image_path);
-    image(matlabImage)
-    axis off
-    axis image
+    z = size(matlabImage, 3);
+    if z == 1
+        handles.image = 0;
+    end
+    set(handles.sliderScale, 'Value', 1);
+    set(handles.txtScale, 'String', '1');
+    guidata(hObject, handles);
+    set_image_to_axis(hObject, handles, matlabImage);
 end
+
+
+function set_image_to_axis(hObject, handles, matlabImage)
+axes(handles.axesImage)
+[x, y, z] = size(matlabImage);
+set(handles.txtImSizeX,'String',num2str(x));
+set(handles.txtImSizeY,'String',num2str(y));
+if z == 1
+    set(handles.cbGrayscale, 'Value', 1);
+    handles.grimage = matlabImage;
+else
+    set(handles.cbGrayscale, 'Value', 0);
+    handles.image = matlabImage;
+    handles.grimage = rgb2gray(matlabImage);
+end
+image(matlabImage)
+axis off
+axis image    
+guidata(hObject, handles);
 
 
 % --- Executes on slider movement.
@@ -303,8 +329,10 @@ function btnDeghost_Callback(hObject, eventdata, handles)
 configs.c = str2double(get(handles.txtC, 'String'));
 image_path = get(handles.txtImage, 'String');
 fprintf('Starting deghost prova_%s...\n', image_path);
-scale = 0.09;
-my_deghost(image_path, configs, scale);
+scale = get(handles.sliderScale, 'Value');
+gray = get(handles.cbGrayscale, 'Value');
+psize = str2double(get(handles.txtPSize, 'String'));
+my_deghost(image_path, configs, scale, gray, psize);
 
 
 % --- Executes on button press in btndReset.
@@ -312,6 +340,10 @@ function btndReset_Callback(hObject, eventdata, handles)
 % hObject    handle to btndReset (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+Reset(handles);
+
+
+function Reset(handles)
 set(handles.txtP1x, 'String', '0');
 set(handles.txtP1y, 'String', '0');
 set(handles.txtP2x, 'String', '0');
@@ -319,8 +351,12 @@ set(handles.txtP2y, 'String', '0');
 set(handles.txtDx, 'String', '0');
 set(handles.txtDy, 'String', '0');
 set(handles.slider3, 'Value', 0);
-set(handles.p1, 'Visible', 'off');
-set(handles.p2, 'Visible', 'off');
+if handles.p1 ~= 0
+    set(handles.p1, 'Visible', 'off');
+end
+if handles.p2 ~= 0
+    set(handles.p2, 'Visible', 'off');
+end
 calculate_shift_d(handles);
 
 
@@ -397,6 +433,142 @@ function txtDy_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function txtDy_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to txtDy (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function txtImSizeX_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtImSizeX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes during object creation, after setting all properties.
+function txtImSizeY_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtImSizeY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes on button press in cbGrayscale.
+function cbGrayscale_Callback(hObject, eventdata, handles)
+% hObject    handle to cbGrayscale (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of cbGrayscale
+value = get(hObject, 'Value');
+if value == 1
+    set_image_to_axis(hObject, handles, handles.grimage);
+else
+    if handles.image == 0
+        set(hObject, 'Value', 1);
+    else
+        set_image_to_axis(hObject, handles, handles.image);
+    end
+end
+    
+% --- Executes on slider movement.
+function sliderScale_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderScale (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+value = get(hObject, 'Value');
+if value > 0
+    handles.scale = value;
+    set(handles.txtScale,'String',num2str(value));
+    set(handles.txtErrorScl, 'Visible', 'off');
+    guidata(hObject, handles);
+    value = get(handles.cbGrayscale, 'Value');
+    if value == 1
+        I = imresize(handles.grimage, handles.scale);
+    else
+        I = imresize(handles.image, handles.scale);
+    end
+    [x, y, ~] = size(I);
+    set(handles.txtImSizeX,'String',num2str(x));
+    set(handles.txtImSizeY,'String',num2str(y));
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function sliderScale_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderScale (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+
+function txtScale_Callback(hObject, eventdata, handles)
+% hObject    handle to txtScale (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txtScale as text
+%        str2double(get(hObject,'String')) returns contents of txtScale as a double
+str = get(hObject,'String');
+value = str2double(str);
+if value > 0 && value <= 1
+    set(handles.sliderScale, 'Value', value);
+    handles.scale = value;
+    set(handles.txtErrorScl, 'Visible', 'off');
+    value = get(handles.cbGrayscale, 'Value');
+    if value == 1
+        I = imresize(handles.grimage, handles.scale);
+    else
+        I = imresize(handles.image, handles.scale);
+    end
+    [x, y, ~] = size(I);
+    set(handles.txtImSizeX,'String',num2str(x));
+    set(handles.txtImSizeY,'String',num2str(y));
+else
+    set(handles.sliderScale, 'Value', 1);
+    handles.scale = 1;
+    set(handles.txtErrorScl, 'Visible', 'on');
+end
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function txtScale_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtScale (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function txtPSize_Callback(hObject, eventdata, handles)
+% hObject    handle to txtPSize (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txtPSize as text
+%        str2double(get(hObject,'String')) returns contents of txtPSize as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function txtPSize_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtPSize (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

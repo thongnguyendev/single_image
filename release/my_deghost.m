@@ -1,4 +1,4 @@
-function my_deghost(image_path, configs, scale)
+function time = my_deghost(image_path, configs, scale, gray, psize)
 format shortg
 begin = fix(clock);
 
@@ -17,7 +17,17 @@ out_t = strcat(pathstr, '/', name, '_t',ext);
 out_r = strcat(pathstr, '/', name, '_r',ext);
 
 I_in = im2double(imread(image_path));
+d3 = size(I_in, 3);
+if gray == 1 && d3 > 1
+    I_in = rgb2gray(I_in);
+end
+if scale <= 0 || scale > 1
+    print('Unavailable scale');
+    return;
+end
 I_in = imresize(I_in, scale);
+configs.dx = round(configs.dx * scale);
+configs.dy = round(configs.dy * scale);
 % d3 = size(I_in, 3);
 % if d3 > 1
 %     fprintf('Estimating ghosting kernel...\n');
@@ -55,7 +65,7 @@ for i = 1 : size(I_in,3)
   configs.ch=i;
 
   % Applying our optimization to each channel independently. 
-  [I_t_k, I_r_k ] = patch_gmm(I_in(:,:,i), configs);
+  [I_t_k, I_r_k ] = patch_gmm(I_in(:,:,i), configs, psize);
     
   fprintf('Post-process %s chanel...\n', chanels{i});
   % Post-processings to enhance the results. 
@@ -69,7 +79,8 @@ fprintf('Write out the results...\n');
 imwrite(I_t, out_t);
 imwrite(I_r, out_r);
 fprintf('All done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
-fprintf('Total time: %d seconds\n', etime(fix(clock), begin));
+time = etime(fix(clock), begin);
+fprintf('Total time: %d seconds\n', time);
 
 function deghost(test_case)
 
@@ -120,7 +131,7 @@ imwrite(I_in, 'in.png');
 imwrite(I_t, 't.png');
 imwrite(I_r, 'r.png');
 
-function [I_t, I_r ] = patch_gmm(I_in, configs)
+function [I_t, I_r ] = patch_gmm(I_in, configs, psize)
 % Setup for patch-based reconstruction 
 h = configs.h;
 w = configs.w;
@@ -140,7 +151,7 @@ A = [Id_mat k_mat];
 lambda = 1e6; 
 
 % patch size for patch-GMM
-psize = 8;
+% psize = 16;
 
 num_patches = (h-psize+1)*(w-psize+1);
 
@@ -162,9 +173,9 @@ excludeList=[];
 
 % Initialization, may takes a while. 
 fprintf('Init...\n');
-%[I_t_i, I_r_i ] = grad_irls(I_in, configs);
+[I_t_i, I_r_i ] = grad_irls(I_in, configs);
 % faster option, but results are not as good.
-[I_t_i I_r_i ] = grad_lasso(I_in, configs);
+% [I_t_i I_r_i ] = grad_lasso(I_in, configs);
 
 
 % Apply patch gmm with the initial result.
