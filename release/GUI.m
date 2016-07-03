@@ -138,6 +138,11 @@ else
     handles.grimage = rgb2gray(matlabImage);
 end
 image(matlabImage)
+if z == 1
+    colormap('gray');
+else
+    colormap('default');
+end
 axis off
 axis image    
 guidata(hObject, handles);
@@ -331,8 +336,7 @@ image_path = get(handles.txtImage, 'String');
 fprintf('Starting deghost prova_%s...\n', image_path);
 scale = get(handles.sliderScale, 'Value');
 gray = get(handles.cbGrayscale, 'Value');
-psize = str2double(get(handles.txtPSize, 'String'));
-my_deghost(image_path, configs, scale, gray, psize);
+my_deghost(image_path, configs, scale, gray);
 
 
 % --- Executes on button press in btndReset.
@@ -555,25 +559,3 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
-function txtPSize_Callback(hObject, eventdata, handles)
-% hObject    handle to txtPSize (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of txtPSize as text
-%        str2double(get(hObject,'String')) returns contents of txtPSize as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function txtPSize_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to txtPSize (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end

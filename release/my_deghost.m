@@ -1,4 +1,4 @@
-function time = my_deghost(image_path, configs, scale, gray, psize)
+function time = my_deghost(image_path, configs, scale, gray)
 format shortg
 begin = fix(clock);
 
@@ -13,8 +13,13 @@ addpath('lbfgsb/lbfgsb3.0_mex1.2');
 
 % mycode
 [pathstr,name,ext] = fileparts(image_path);
-out_t = strcat(pathstr, '/', name, '_t',ext);
-out_r = strcat(pathstr, '/', name, '_r',ext);
+if size(pathstr) == 0
+    out_t = strcat(name, '_t',ext);
+    out_r = strcat(name, '_r',ext);
+else
+    out_t = strcat(pathstr, '/', name, '_t',ext);
+    out_r = strcat(pathstr, '/', name, '_r',ext);
+end
 
 I_in = im2double(imread(image_path));
 d3 = size(I_in, 3);
@@ -22,7 +27,7 @@ if gray == 1 && d3 > 1
     I_in = rgb2gray(I_in);
 end
 if scale <= 0 || scale > 1
-    print('Unavailable scale');
+    fprintf('Unavailable scale');
     return;
 end
 I_in = imresize(I_in, scale);
@@ -52,16 +57,16 @@ configs.dy = round(configs.dy * scale);
 % end
 % end
 
-configs.padding = max(configs.dx, configs.dy) + 10;
+configs.padding = max(abs(configs.dx), abs(configs.dy)) + 10;
 [h, w, ~] = size(I_in);
 configs.h = h;
 configs.w = w;
 configs.num_px = h*w;
 fprintf('Pre-process done!\n');
-
-chanels = cellstr(['red  ';'green';'blue ']);
+psize = 8;
+chanels = {'first', 'second', 'third'};
 for i = 1 : size(I_in,3) 
-    fprintf('Optimize %s chanel...\n', chanels{i});
+  fprintf('Optimize %s chanel...\n', chanels{i});
   configs.ch=i;
 
   % Applying our optimization to each channel independently. 
