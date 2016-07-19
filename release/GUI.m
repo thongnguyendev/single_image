@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 31-May-2016 11:34:13
+% Last Modified by GUIDE v2.5 06-Jul-2016 23:08:41
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -103,25 +103,65 @@ function btnBrowseImg_Callback(hObject, eventdata, handles)
 % hObject    handle to btnBrowseImg (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-[filename,pathname] = uigetfile('*.*','Select an image');
+[filename,pathname] = uigetfile('*.*','Select an image/video');
 if isequal(filename,0)
    % disp('User selected Cancel')
 else
-    Reset(handles);
-    handles.p1 = 0;
-    handles.p2 = 0;
-    image_path = fullfile(pathname, filename);
-    set(handles.txtImage, 'String', image_path);
-    matlabImage = imread(image_path);
-    z = size(matlabImage, 3);
-    if z == 1
-        handles.image = 0;
+    [~,~,ext] = fileparts(filename);
+    if strcmp(ext, '.mp4') == 1 || strcmp(ext, '.avi') == 1
+        set_video(hObject, handles, filename, pathname);
+    else
+        set_image(hObject, handles, filename, pathname);
     end
-    set(handles.sliderScale, 'Value', 1);
-    set(handles.txtScale, 'String', '1');
-    guidata(hObject, handles);
-    set_image_to_axis(hObject, handles, matlabImage);
 end
+
+
+function set_image(hObject, handles, filename, pathname)
+Reset(handles);
+set(handles.groupD, 'Visible', 'on');
+set(handles.groupC, 'Visible', 'on');
+set(handles.groupDeghost, 'Visible', 'on');
+set(handles.groupMaxFr, 'Visible', 'off');
+set(handles.groupDecompose, 'Visible', 'off');
+set(handles.groupImage, 'Title', 'Image');
+handles.p1 = 0;
+handles.p2 = 0;
+image_path = fullfile(pathname, filename);
+set(handles.txtImage, 'String', image_path);
+matlabImage = imread(image_path);
+z = size(matlabImage, 3);
+if z == 1
+    handles.image = 0;
+end
+set(handles.sliderScale, 'Value', 1);
+set(handles.txtScale, 'String', '1');
+guidata(hObject, handles);
+set_image_to_axis(hObject, handles, matlabImage);
+
+
+function set_video(hObject, handles, filename, pathname)
+Reset(handles);
+set(handles.groupD, 'Visible', 'off');
+set(handles.groupC, 'Visible', 'off');
+set(handles.groupDeghost, 'Visible', 'off');
+set(handles.groupMaxFr, 'Visible', 'on');
+set(handles.groupDecompose, 'Visible', 'on');
+set(handles.groupImage, 'Title', 'Reference Image Frame');
+set(handles.txtMaxFrame, 'String', '10');
+path = fullfile(pathname, filename);
+set(handles.txtImage, 'String', path);
+set(handles.sliderScale, 'Value', 1);
+set(handles.txtScale, 'String', '1');
+video=VideoReader(path);
+numTotFrames=get(video,'numberOfFrames');
+refIndex = floor(numTotFrames / 2) + 1;
+refFrame = read(video, refIndex);
+z = size(refFrame, 3);
+if z == 1
+    handles.image = 0;
+end
+guidata(hObject, handles);
+set_image_to_axis(hObject, handles, refFrame);
 
 
 function set_image_to_axis(hObject, handles, matlabImage)
@@ -336,7 +376,8 @@ image_path = get(handles.txtImage, 'String');
 fprintf('Starting deghost prova_%s...\n', image_path);
 scale = get(handles.sliderScale, 'Value');
 gray = get(handles.cbGrayscale, 'Value');
-my_deghost(image_path, configs, scale, gray);
+[~, T, R] = my_deghost(image_path, configs, scale, gray);
+figure; imshowpair(T,R,'montage');
 
 
 % --- Executes on button press in btndReset.
@@ -559,3 +600,44 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+
+% --- Executes on button press in btnDecompose.
+function btnDecompose_Callback(hObject, eventdata, handles)
+% hObject    handle to btnDecompose (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+input = get(handles.txtImage, 'String');
+gray = get(handles.cbGrayscale, 'Value');
+scale = str2double(get(handles.txtScale, 'String'));
+maxFr = str2double(get(handles.txtMaxFrame, 'String'));
+[~, B, O] = ObstructionFree_OpticalFlow(input, gray, scale, maxFr);
+figure; imshowpair(uint8(B),O,'montage');
+
+% --- Executes on button press in pushbutton7.
+function pushbutton7_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function txtMaxFrame_Callback(hObject, eventdata, handles)
+% hObject    handle to txtMaxFrame (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txtMaxFrame as text
+%        str2double(get(hObject,'String')) returns contents of txtMaxFrame as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function txtMaxFrame_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txtMaxFrame (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

@@ -1,4 +1,4 @@
-function time = my_deghost(image_path, configs, scale, gray)
+function [time, background, reflection] = my_deghost(image_path, configs, scale, gray)
 format shortg
 begin = fix(clock);
 
@@ -83,6 +83,8 @@ end
 fprintf('Write out the results...\n');
 imwrite(I_t, out_t);
 imwrite(I_r, out_r);
+background = I_t;
+reflection = I_r;
 fprintf('All done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
 time = etime(fix(clock), begin);
 fprintf('Total time: %d seconds\n', time);
